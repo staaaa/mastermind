@@ -2,6 +2,10 @@ from itertools import combinations_with_replacement
 from random import Random
 import multiprocessing
 
+COLOR = 2
+WHITE = 1
+INCORRECT = 0
+
 class Decoder(multiprocessing.Process):
     def __init__(self, conn):
         super().__init__()
@@ -13,62 +17,75 @@ class Decoder(multiprocessing.Process):
         self.numbersAvailable = [1,2,3,4,5,6]
 
     def makeGuess(self):
-        #If we haven't recived any feedback to our previous guesses then choose randomly
+        #If we haven't received any feedback to our previous guesses then choose randomly
         if self.feedback is None:
             guess = self.allPerms[self.rng.randrange(0, len(self.allPerms)-1)]
             self.allPerms.remove(guess)
-        #If we have recived feedback then
+        #If we have received feedback then
         else:
-            #Colors and whites are a list of tuples {index, value}
-            colors = self.feedback[1]
-            whites = self.feedback[2]
+            marks = self.feedback
             guess = [0,0,0,0]
             remainingIndexes = [0,1,2,3]
 
             #Keep the old correct guesses
-            for color in colors:
-                guess[color[0]] = color[1]
-                remainingIndexes.remove(color[0])
+            #Go through every mark
+            #if its 2 then rewrite previous guessed number
+            for i in range(len(marks)):
+                if marks[i] == COLOR:
+                    guess[i] = self.previousGuess[i]
+                    if i in remainingIndexes:
+                        remainingIndexes.remove(i)
 
             #Keep numbers from whites but change indexes
-            for white in whites:
-                while True:
-                    #generate random number 
-                    randomIndex = self.rng.randrange(0, len(remainingIndexes))
-                    #we will pick a index[number] and check if the index is different from previous guess
-                    if remainingIndexes[randomIndex] != white[0]:
-                        #if so set a guess[index[niumber]] to white value (change white index)
-                        guess[remainingIndexes[randomIndex]] = white[1]
-                        #remove used index from remaining indexes
-                        remainingIndexes.remove(remainingIndexes[randomIndex])
-                        break
+            for i in range(len(marks)):
+                if marks[i] == WHITE and remainingIndexes:  # Check if we have remaining indexes
+                    tries = 0
+                    while tries < 10:  # Prevent infinite loops
+                        tries += 1
+                        #generate random number 
+                        if not remainingIndexes:  # Safety check
+                            break
+                        randomIndex = self.rng.randrange(0, len(remainingIndexes))
+                        #we will pick a index[number] and check if the index is different from previous guess
+                        if remainingIndexes[randomIndex] != i:
+                            #if so set a guess[index[number]] to white value (change white index)
+                            guess[remainingIndexes[randomIndex]] = self.previousGuess[i]
+                            #remove used index from remaining indexes
+                            remainingIndexes.remove(remainingIndexes[randomIndex])
+                            break
             
+            # Identify numbers to remove from available pool
             if self.previousGuess != None:
                 numbers_to_remove = []
-                previous_values = self.previousGuess  
                 
-                # Identify numbers to remove
-                for number in self.numbersAvailable:
-                    if (number in previous_values and 
-                        not any(color[1] == number for color in colors) and 
-                        not any(white[1] == number for white in whites)):
+                # Find numbers that were used in previous guess but aren't COLOR or WHITE
+                for i in range(len(self.previousGuess)):
+                    number = self.previousGuess[i]
+                    # If mark is INCORRECT, add the number to removal list
+                    if marks[i] == INCORRECT and number in self.numbersAvailable:
                         numbers_to_remove.append(number)
-
-                # Remove identified numbers so that decoder doesnt use twice incorrect numbers
+                
+                # Update available numbers list
                 for num in numbers_to_remove:
-                        if num in self.numbersAvailable:
-                            self.numbersAvailable.remove(num)
+                    if num in self.numbersAvailable:
+                        self.numbersAvailable.remove(num)
+                
+                # Safety check - ensure we have numbers available
+                if not self.numbersAvailable:
+                    self.numbersAvailable = [1, 2, 3, 4, 5, 6]
             
-            # Fill the rest of the remaining numbers with random guesses (but do not use the incorrect numbers)
-            # That were previously used
+            # Fill remaining positions with available numbers
             for index in remainingIndexes:
-                randomIndex = self.rng.randrange(0, len(self.numbersAvailable))
-                guess[index] = self.numbersAvailable[randomIndex]
+                if self.numbersAvailable:  # Check if we have numbers available
+                    randomIndex = self.rng.randrange(0, len(self.numbersAvailable))
+                    guess[index] = self.numbersAvailable[randomIndex]
+                else:
+                    # Fallback if no numbers are available
+                    guess[index] = self.rng.randrange(1, 7)
 
         self.previousGuess = guess
         return guess
     
-
     def run(self):
         while True:
             # Make a guess and send it to coder
@@ -78,7 +95,6 @@ class Decoder(multiprocessing.Process):
             # Wait for feedback from coder
             self.feedback = self.conn.recv()
             print(f"Decoder got {self.feedback} as feedback \n")
-            # Check if coder said it's gameover
-            if self.feedback[0] == True:
+            # Check if all positions are correct (all 2's)
+            if all(mark == COLOR for mark in self.feedback):
                 break
-        

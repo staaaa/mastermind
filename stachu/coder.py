@@ -4,6 +4,10 @@ from random import Random
 import multiprocessing
 import time
 
+COLOR = 2
+WHITE = 1
+INCORRECT = 0
+
 # Class Coder - that's the player that's coding the password and marking the guesses
 class Coder(multiprocessing.Process):
     def __init__(self, conn):
@@ -21,12 +25,8 @@ class Coder(multiprocessing.Process):
 
     # This method takes a guess as a parameter (sent from decoder) and marks it
     def markGuess(self, guess):
-        #colors are points for correct guesses on correct places
-        colors = []
-        #whites are points for correct guesses on incorrect places
-        whites = []
-        #if color = 4 we want to indicate that the game ended
-        won = False
+        #array for markings
+        marks = [INCORRECT,INCORRECT,INCORRECT,INCORRECT]
         #in this array we place the indexes of positions we marked in first iteration
         marked = []
 
@@ -34,7 +34,7 @@ class Coder(multiprocessing.Process):
         #   Additionally, add every index that was marked to marked list
         for i in range(len(guess)):
             if guess[i] == self.password[i]:
-                colors.append((i, guess[i]))
+                marks[i] = COLOR
                 marked.append(i)
 
         #2. Create remaning array with only unmarked colors from password
@@ -52,12 +52,10 @@ class Coder(multiprocessing.Process):
         for i in range(len(guess)):
             # if current number is in remaining password and this index hasn't been marked before
             if guess[i] in remaining and i not in marked:
-                whites.append((i, guess[i]))
+                marks[i] = WHITE
                 marked.append(i)
                 remaining.remove(guess[i])
-        if len(colors) == 4:
-            won = True
-        return (won, colors, whites)
+        return (marks)
 
 
     def run(self):
@@ -76,6 +74,6 @@ class Coder(multiprocessing.Process):
             self.conn.send(result)
             print(f"Coder send {result} as mark")
             # 5. Check the first parameter in result (won: Boolean)
-            if result[0] == True:
+            if all(mark == COLOR for mark in result):
                 break
         print("Decoder won")
