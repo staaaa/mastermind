@@ -1,4 +1,4 @@
-from decoder import Decoder
+from iterman.decoder import Decoder
 from coder import Coder
 import os
 import multiprocessing
