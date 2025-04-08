@@ -1,4 +1,4 @@
-from itertools import combinations_with_replacement
+from itertools import product
 from random import Random
 import multiprocessing
 
@@ -9,7 +9,8 @@ INCORRECT = 0
 class Decoder(multiprocessing.Process):
     def __init__(self, conn):
         super().__init__()
-        self.allPerms = list(combinations_with_replacement([1,2,3,4,5,6], 4))
+        elements = [1, 2, 3, 4, 5, 6]
+        self.allPerms = list(product(elements, repeat=4))
         self.rng = Random()
         self.conn = conn
         self.feedback = None

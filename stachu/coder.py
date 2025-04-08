@@ -1,5 +1,5 @@
 from colors import Colors
-from itertools import combinations_with_replacement
+from itertools import product
 from random import Random
 import multiprocessing
 import time
@@ -13,7 +13,8 @@ class Coder(multiprocessing.Process):
     def __init__(self, conn):
         super().__init__()
         self.password = []
-        self.allCombinations = list(combinations_with_replacement([1,2,3,4,5,6], 4))
+        elements = [1, 2, 3, 4, 5, 6]
+        self.allCombinations = list(product(elements, repeat=4))
         self.rng = Random()
         self.conn = conn
 
