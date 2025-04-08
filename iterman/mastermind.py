@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Plik: mastermind.py
-Implementacja klasy Mastermind, która łączy procesy Coder i Decoder dla rozgrywki w Mastermind.
-"""
-
 import multiprocessing
 from coder import Coder
 from decoderLib import Decoder

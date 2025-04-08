@@ -1,9 +1,4 @@
 #!/usr/bin/env python3
-"""
-Plik: coder.py
-Implementacja klasy Coder jako procesu, który generuje losowe hasło i ocenia zgadywania.
-"""
-
 import time
 from random import randint
 import multiprocessing
