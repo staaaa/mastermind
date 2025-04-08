@@ -4,13 +4,13 @@ from Cython.Build import cythonize
 
 extensions = [
     Extension(
-        name="decoderLib",           # nazwa modułu
+        name="decoderIterman",           # nazwa modułu
         sources=["decoder.py"],   # źródło – używamy pliku decoder.py (może być kompilowany przez Cython)
         language="c",             # język C (Cython generuje kod C)
     )
 ]
 
 setup(
-    name="decoderLib",
+    name="decoderIterman",
     ext_modules=cythonize(extensions, language_level="3"),
 )

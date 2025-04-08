@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import multiprocessing
 from coder import Coder
-from decoderLib import Decoder
+from decoderStachu import Decoder
 
 class Mastermind:
     """

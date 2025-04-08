@@ -1,3 +1,6 @@
 **/__pycache__/
 .DStore
-**/build/**
+**/build/
+**/venv/
+**.so
+**.c
